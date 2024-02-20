@@ -5,12 +5,15 @@ export default {
     return {
       ticker: '',
       tickers: [],
-    sel: null,
-    graph: [],
-    page: 1,
-    filter: '',
-    hasNextpage: true,
-    exists: false,
+      sel: null,
+      graph: [],
+      page: 1,
+      filter: '',
+      hasNextpage: true,
+      exists: false,
+      clues: [],
+      shown: [],
+      noloaded: true,
     }
   },
 
@@ -49,14 +52,55 @@ export default {
       })
     }
   },
-  methods: {
-    filteredTickers() {
-      const start = (this.page - 1) * 6
-      const end = this.page*6
 
-     const filteredTickers = this.tickers
+  mounted() {
+    this.getNames()
+    this.noloaded = false
+  },
+
+  methods: {
+    async getNames() {
+      try {
+        const f = await fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
+        if (!f.ok) {
+          throw new Error (`Server responded with ${f.status} status`)
+        }
+          const data = await f.json()
+          for (const key in data.Data) {
+            if (data.Data.hasOwnProperty(key)) {
+              this.clues.push(data.Data[key].Symbol)
+            }
+          }
+        } catch (error) {
+      console.error('An error occured:', error);
+    }   
+    },
+    showClues() {
+      if (this.ticker) {
+        let input = this.ticker.toUpperCase()
+        this.shown = this.clues.filter(symbol => symbol.includes(input))
+      }      
+    },
+    resetClues() {
+      if (!(this.ticker)) {
+        this.shown = []
+      }
+    },
+    useClue(key) {
+      this.ticker = this.shown[key]
+      this.add()
+      this.showClues()
+      if (this.exists === false) {
+        this.shown = []
+      }
+    },
+    filteredTickers() {
+      const start = (Number(this.page) - Number(1)) * 6
+      const end = Number(this.page) * Number(6)
+
+      const filteredTickers = this.tickers
         .filter(ticker => ticker.name
-        .includes(this.filter))
+        .includes(this.filter.toUpperCase()))
 
         this.hasNextpage = filteredTickers.length > end
         return filteredTickers.slice(start, end)
@@ -67,10 +111,14 @@ export default {
           https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=3ae297140a9f7c800ccd0bfac0719741592e8d9fb4f8b9b522f49f5aee143ad8
         `)
         const data = await f.json()
-        this.tickers.find(t => t.name === tickerName).price = 
+        if (data.Response === 'Error') {
+          return false
+        } else {
+          this.tickers.find(t => t.name === tickerName).price = 
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2) 
-        if (this.sel?.name === tickerName) {
-          this.graph.push(data.USD)
+          if (this.sel?.name === tickerName) {
+            this.graph.push(data.USD)
+        }
         }
       }, 5000);
       this.ticker = ""
@@ -84,12 +132,17 @@ export default {
           price: '-' 
         };
         if (!(this.tickers.some(t => t.name === currentTicker.name))) {
-          this.tickers.push(currentTicker)
-          this.exists = false
-          this.filters = ''
+            if (this.ticker) {
+              this.tickers.push(currentTicker)
+              this.exists = false
+              this.shown = []
+              this.filters = ''
 
-          localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
-          this.subscribeToUpdate(currentTicker.name)
+              localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
+              this.subscribeToUpdate(currentTicker.name)
+            } else {
+              console.error('Значение тикера не должно быть пустым')
+            }
         } else {
           this.exists = true
         }
@@ -114,12 +167,12 @@ export default {
 
 <template>
 <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
-  <!-- <div class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
+  <div v-if="noloaded" class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
     <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
-  </div> -->
+  </div>
   <div class="container">
     <div class="w-full my-4"></div>
     <section>
@@ -132,7 +185,7 @@ export default {
             <input
               v-model="ticker"
               @keydown.enter="add"
-              @input="resetExists"
+              @input="resetExists(); showClues(); resetClues()"
               type="text"
               name="wallet"
               id="wallet"
@@ -140,18 +193,18 @@ export default {
               placeholder="Например DOGE"
             />
           </div>
-          <div class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BTC
+          <div v-if="this.shown.length" class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
+            <span v-if="this.shown[0]" @click="useClue(0)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              {{ this.shown[0] }}
             </span>
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              DOGE
+            <span v-if="this.shown[1]" @click="useClue(1)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              {{ this.shown[1] }}
             </span>
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BCH
+            <span v-if="this.shown[2]" @click="useClue(2)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              {{ this.shown[2] }}
             </span>
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              CHD
+            <span v-if="this.shown[3]" @click="useClue(3)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              {{ this.shown[3] }}
             </span>
           </div>
           <div v-if="exists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
@@ -190,7 +243,7 @@ export default {
           </button>
           <button 
             v-if="hasNextpage"
-            @click="page = page + 1"
+            @click="page = Number(page) + Number(1)"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
             Вперед
           </button>
