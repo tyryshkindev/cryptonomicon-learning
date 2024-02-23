@@ -1,4 +1,5 @@
 <script>
+import { subscribeToTicker, unsubscribeFromTicker, loadList } from './api'
 export default {
   name: 'App',
   data() {
@@ -53,9 +54,12 @@ export default {
     if (tickersData) {
       this.tickers = JSON.parse(tickersData)
       this.tickers.forEach(ticker => {
-        this.subscribeToUpdate(ticker.name)
+        subscribeToTicker(ticker.name, newPrice =>  
+          this.updateTicker(ticker.name, newPrice)
+        )
       })
     }
+    setInterval(this.updateTickers, 5000)
   },
 
   mounted() {
@@ -106,21 +110,20 @@ export default {
   },
 
   methods: {
+    updateTicker(tickerName, price) {
+      this.tickers
+      .filter(t => t.name === tickerName)
+      .forEach(t => {
+         t.price = price
+      })
+    },
     async getNames() {
-      try {
-        const f = await fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
-        if (!f.ok) {
-          throw new Error (`Server responded with ${f.status} status`)
+      const exchangeData = await loadList()
+      for (const key in exchangeData.Data) {
+        if (exchangeData.Data.hasOwnProperty(key)) {
+          this.clues.push(exchangeData.Data[key].Symbol)
         }
-          const data = await f.json()
-          for (const key in data.Data) {
-            if (data.Data.hasOwnProperty(key)) {
-              this.clues.push(data.Data[key].Symbol)
-            }
-          }
-        } catch (error) {
-      console.error('An error occured:', error);
-    }   
+      }  
     },
     showClues() {
       if (this.ticker) {
@@ -141,24 +144,23 @@ export default {
         this.shown = []
       }
     },
-    subscribeToUpdate(tickerName) {
-      setInterval(async () => {
-        const f = await fetch(`
-          https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=3ae297140a9f7c800ccd0bfac0719741592e8d9fb4f8b9b522f49f5aee143ad8
-        `)
-        const data = await f.json()
-        if (data.Response === 'Error') {
-          return false
-        } else {
-          this.tickers.find(t => t.name === tickerName).price = 
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2) 
-          if (this.selectedTicker?.name === tickerName) {
-            this.graph.push(data.USD)
-        }
-        }
-      }, 5000);
-      this.ticker = ""
+    async updateTickers() {
+    //   if (!this.tickers.length) {
+    //     return
+    //   }
+    //   const exchangeData = await loadTickers(this.tickers.map(t => t.name))
+    //   this.tickers.forEach(ticker => {
+    //     const price = exchangeData[ticker.name.toUpperCase()]
+    //     ticker.price = price ?? '-'
+    //     })
     },
+    formatPrice(price) {
+      if (price === '-') {
+        return price
+      }
+      return price > 1 ? price.toFixed(2) : price.toPrecision(2);
+    },
+
     resetExists() {
       this.exists = false
     },
@@ -173,8 +175,10 @@ export default {
               this.exists = false
               this.shown = []
               this.filters = ''
-
-              this.subscribeToUpdate(currentTicker.name)
+              this.ticker = ''
+              subscribeToTicker(currentTicker.name, newPrice => 
+                this.updateTicker(currentTicker.name, newPrice)
+              )
             } else {
               console.error('Значение тикера не должно быть пустым')
             }
@@ -190,6 +194,7 @@ export default {
       if (this.selectedTicker === tickerToRemove) {
         this.selectedTicker = null
       }
+      unsubscribeFromTicker(tickerToRemove.name)
     },
   }
 }
@@ -295,7 +300,7 @@ export default {
               {{  t.name  }} - USD
             </dt>
             <dd class="mt-1 text-3xl font-semibold text-gray-900">
-              {{ t.price }}
+              {{ formatPrice(t.price) }}
             </dd>
           </div>
           <div class="w-full border-t border-gray-200"></div>
