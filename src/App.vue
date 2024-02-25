@@ -59,7 +59,6 @@ export default {
         )
       })
     }
-    setInterval(this.updateTickers, 5000)
   },
 
   mounted() {
@@ -143,16 +142,6 @@ export default {
       if (this.exists === false) {
         this.shown = []
       }
-    },
-    async updateTickers() {
-    //   if (!this.tickers.length) {
-    //     return
-    //   }
-    //   const exchangeData = await loadTickers(this.tickers.map(t => t.name))
-    //   this.tickers.forEach(ticker => {
-    //     const price = exchangeData[ticker.name.toUpperCase()]
-    //     ticker.price = price ?? '-'
-    //     })
     },
     formatPrice(price) {
       if (price === '-') {
