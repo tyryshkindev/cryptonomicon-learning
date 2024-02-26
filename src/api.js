@@ -1,18 +1,27 @@
 const API_KEY = '3ae297140a9f7c800ccd0bfac0719741592e8d9fb4f8b9b522f49f5aee143ad8'
 
 const tickersHandlers = new Map()
+const AGGREGATE_INDEX = '5'
+
+const bc = new BroadcastChannel('cryptonomicon')
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2/?api_key=${API_KEY}`)
 
-const AGGREGATE_INDEX = '5'
+bc.addEventListener('message', event => {
+    const { currency, newPrice } = event.data
+    const handlers = tickersHandlers.get(currency) ?? []
+    handlers.forEach(fn => fn(newPrice))
+})
 
 socket.addEventListener('message', e => {
     const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data)
-    if (type !== AGGREGATE_INDEX) {
+    if (type !== AGGREGATE_INDEX || newPrice === undefined) {
         return
     }
 
     const handlers = tickersHandlers.get(currency) ?? []
     handlers.forEach(fn => fn(newPrice))
+
+    bc.postMessage({currency, newPrice})
 
 })
 
@@ -55,3 +64,4 @@ export const loadList = () =>
     fetch(
         'https://min-api.cryptocompare.com/data/all/coinlist?summary=true'
     ).then(f => f.json())
+
