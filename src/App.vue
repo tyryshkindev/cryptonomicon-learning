@@ -113,6 +113,9 @@ export default {
       this.tickers
       .filter(t => t.name === tickerName)
       .forEach(t => {
+        if (t === this.selectedTicker) {
+          this.graph.push(price)
+        }
          t.price = price
       })
     },
@@ -169,7 +172,7 @@ export default {
                 this.updateTicker(currentTicker.name, newPrice)
               )
             } else {
-              console.error('Значение тикера не должно быть пустым')
+              window.alert('Значение тикера не должно быть пустым')
             }
         } else {
           this.exists = true
