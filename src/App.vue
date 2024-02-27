@@ -1,5 +1,6 @@
 <script>
 import { subscribeToTicker, unsubscribeFromTicker, loadList } from './api'
+import {copy} from './cloner'
 export default {
   name: 'App',
   data() {
@@ -14,6 +15,7 @@ export default {
       exists: false,
       noloaded: true,
       selectedTicker: null,
+      bc: new BroadcastChannel('cryptonomicon-update')
     }
   },
 
@@ -59,6 +61,9 @@ export default {
         )
       })
     }
+    this.bc.addEventListener('message', event => {
+      this.tickers = event.data
+    })
   },
 
   mounted() {
@@ -171,6 +176,7 @@ export default {
               subscribeToTicker(currentTicker.name, newPrice => 
                 this.updateTicker(currentTicker.name, newPrice)
               )
+              this.bc.postMessage(copy(this.tickers))
             } else {
               window.alert('Значение тикера не должно быть пустым')
             }
@@ -187,6 +193,7 @@ export default {
         this.selectedTicker = null
       }
       unsubscribeFromTicker(tickerToRemove.name)
+      this.bc.postMessage(copy(this.tickers))
     },
   }
 }
