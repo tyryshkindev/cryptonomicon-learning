@@ -1,5 +1,5 @@
 <script>
-import { subscribeToTicker, unsubscribeFromTicker, loadList } from './api'
+import { subscribeToTicker, unsubscribeFromTicker, loadList, wrongTickers } from './api'
 import {copy} from './cloner'
 export default {
   name: 'App',
@@ -15,7 +15,8 @@ export default {
       exists: false,
       noloaded: true,
       selectedTicker: null,
-      bc: new BroadcastChannel('cryptonomicon-update')
+      bc: new BroadcastChannel('cryptonomicon-update'),
+      wrongTickers: wrongTickers
     }
   },
 
@@ -114,6 +115,9 @@ export default {
   },
 
   methods: {
+    checkWrong() {
+      return this.paginatedTickers.some(t => wrongTickers.includes(t.name))
+    },
     updateTicker(tickerName, price) {
       this.tickers
       .filter(t => t.name === tickerName)
@@ -294,6 +298,9 @@ export default {
           }"
           class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
         >
+        <div :class="{
+          'bg-red-100': wrongTickers.includes(t.name)
+        }">
           <div class="px-4 py-5 sm:p-6 text-center">
             <dt class="text-sm font-medium text-gray-500 truncate">
               {{  t.name  }} - USD
@@ -302,6 +309,7 @@ export default {
               {{ formatPrice(t.price) }}
             </dd>
           </div>
+        </div>
           <div class="w-full border-t border-gray-200"></div>
           <button
             @click.stop="handleDelete(t)"

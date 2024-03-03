@@ -1,7 +1,9 @@
 const API_KEY = '3ae297140a9f7c800ccd0bfac0719741592e8d9fb4f8b9b522f49f5aee143ad8'
 
 const tickersHandlers = new Map()
+export const wrongTickers = []
 const AGGREGATE_INDEX = '5'
+const INVALID_SUB = '500'
 
 const bc = new BroadcastChannel('cryptonomicon')
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2/?api_key=${API_KEY}`)
@@ -15,7 +17,13 @@ bc.addEventListener('message', event => {
 socket.addEventListener('message', e => {
     const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data)
     if (type !== AGGREGATE_INDEX || newPrice === undefined) {
-        return
+        if (type === INVALID_SUB) {
+            const { PARAMETER: stringCurrency } = JSON.parse(e.data)
+            const currency = stringCurrency.split('~')
+            if (!wrongTickers.includes(currency[2])) {
+                wrongTickers.push(currency[2])
+            }
+        }
     }
 
     const handlers = tickersHandlers.get(currency) ?? []
