@@ -16,7 +16,9 @@ export default {
       noloaded: true,
       selectedTicker: null,
       bc: new BroadcastChannel('cryptonomicon-update'),
-      wrongTickers: wrongTickers
+      wrongTickers: wrongTickers,
+      maxGraphElements: 1,
+      graphWidth: 38
     }
   },
 
@@ -26,6 +28,7 @@ export default {
     },
     selectedTicker() {
       this.graph = []
+      this.$nextTick().then(this.calculateMaxGraphElements)
     },
     filter() {
       this.page = 1
@@ -70,6 +73,11 @@ export default {
   mounted() {
     this.getNames()
     this.noloaded = false
+    window.addEventListener('resize', this.calculateMaxGraphElements)
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('resize', this.calculateMaxGraphElements)
   },
 
   computed: {
@@ -115,15 +123,24 @@ export default {
   },
 
   methods: {
+    calculateMaxGraphElements() {
+      if (!this.$refs.graph) {
+        return
+      }
+      this.maxGraphElements =  this.$refs.graph.clientWidth / this.graphWidth
+      },
     checkWrong() {
       return this.paginatedTickers.some(t => wrongTickers.includes(t.name))
     },
     updateTicker(tickerName, price) {
       this.tickers
-      .filter(t => t.name === tickerName)
-      .forEach(t => {
+        .filter(t => t.name === tickerName)
+        .forEach(t => {
         if (t === this.selectedTicker) {
           this.graph.push(price)
+          if (this.graph.length > this.maxGraphElements) {
+            this.graph = this.graph.slice(-(this.maxGraphElements))
+          }
         }
          t.price = price
       })
@@ -336,11 +353,13 @@ export default {
       <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
         {{ selectedTicker.name }} - USD
       </h3>
-      <div class="flex items-end border-gray-600 border-b border-l h-64">
+      <div class="flex items-end border-gray-600 border-b border-l h-64"
+      ref="graph">
         <div
           v-for="(bar, index) in normalizedGraph"
+          ref="amountGraphElements"
           :key="index"
-          :style="{ height: `${bar}%` }"
+          :style="{ height: `${bar}%`, width: `${graphWidth}` }"
           class="bg-purple-800 border w-10"></div>
       </div>
       <button
