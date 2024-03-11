@@ -49,11 +49,9 @@ export default {
             }
         },
         clickClue(key) {
-            console.log('use!');
-            this.add(this.shown[key])
-            console.log('add');
+            this.$emit('add-method', this.shown[key])
+            this.resetClues()
             this.showClues()
-            console.log('clues')
             if (this.exists === false) {
                 this.shown = []
             }

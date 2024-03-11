@@ -8,7 +8,7 @@
           <div class="mt-1 relative rounded-md shadow-md">
             <input
               v-model="ticker"
-              @keydown.enter="add"
+              @keydown.enter="directAdd"
               @input="handleInput"
               type="text"
               name="wallet"
@@ -17,13 +17,17 @@
               placeholder="Например DOGE"
             />
           </div>
-          <DisplayClues ref="displayCluesRef" :datatext="datatext"/>
+          <DisplayClues 
+          ref="displayCluesRef"
+          :datatext="datatext"
+          @add-method="handleAdd"
+          />
           <div v-if="exists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
 
         </div>
       </div>
       <AddButton
-        @click="add"
+        @click="handleAdd"
         type="button"
         class="my-4"
       />
@@ -43,10 +47,6 @@ export default {
         type: Boolean,
         reqired: false
       },
-      // datatext: {
-      //   type: String,
-      //   reqired: false
-      // }
     },
 
     data() {
@@ -69,10 +69,13 @@ export default {
     },
 
     methods: {
-        add() {
-          this.ticker = ''      
-          this.exists = true
-          this.existsChanged()
+        directAdd() {
+          this.handleAdd(this.ticker)
+        },
+        handleAdd(ticker) {
+          this.$emit('add-method', ticker)
+          this.ticker = ''
+          this.$refs.displayCluesRef.resetClues()
         },
         handleInput() {
           this.resetExists()

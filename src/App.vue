@@ -171,7 +171,6 @@ export default {
               this.tickers = [...this.tickers, currentTicker]
               this.exists = false
               this.emitChanges()
-              this.shown = []
               this.filters = ''
               subscribeToTicker(currentTicker.name, newPrice => 
                 this.updateTicker(currentTicker.name, newPrice)
@@ -211,7 +210,7 @@ export default {
   <div class="container">
     <div class="w-full my-4"></div>
     <InputTicker
-    @add-ticker="add" 
+    @add-method="add" 
     @exists-changed="handleExistsChanged"
     />
       <template v-if="tickers.length">
