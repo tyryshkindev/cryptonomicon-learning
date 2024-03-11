@@ -1,44 +1,44 @@
 <template>
-    <div v-if="this.shown.length" class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
-        <span v-if="this.shown[0]" @click="useClue(0)"
+    <div v-if="shown.length" class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
+        <span v-if="shown[0]" @click="clickClue(0)"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-            {{ this.shown[0] }}
+            {{ shown[0] }}
         </span>
-        <span v-if="this.shown[1]" @click="useClue(1)"
+        <span v-if="shown[1]" @click="clickClue(1)"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-            {{ this.shown[1] }}
+            {{ shown[1] }}
         </span>
-        <span v-if="this.shown[2]" @click="useClue(2)"
+        <span v-if="shown[2]" @click="clickClue(2)"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-            {{ this.shown[2] }}
+            {{ shown[2] }}
         </span>
-        <span v-if="this.shown[3]" @click="useClue(3)"
+        <span v-if="shown[3]" @click="clickClue(3)"
             class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-            {{ this.shown[3] }}
+            {{ shown[3] }}
         </span>
     </div>
 </template>
 <script>
 import { loadList } from '@/api'
 export default {
-    data() {
-        return {
-            shown: [],
-            clues: [],
-        }
-    },
     props: {
         ticker: {
             type: String,
             required: true
         }
     },
-    mounted() {
+    data() {
+        return {
+            shown: [],
+            clues: [],
+        }
+    },
+    created() {
         this.clues = loadList()
     },
     methods: {
         showClues() {
-            if (this.ticker) {
+            if (this.ticker && this.clues !== []) {
                 let input = this.ticker.toUpperCase()
                 this.shown = this.clues.filter(symbol => symbol.includes(input))
             }
@@ -48,10 +48,12 @@ export default {
                 this.shown = []
             }
         },
-        useClue(key) {
-            this.ticker = this.shown[key]
-            this.add()
+        clickClue(key) {
+            console.log('use!');
+            this.add(this.shown[key])
+            console.log('add');
             this.showClues()
+            console.log('clues')
             if (this.exists === false) {
                 this.shown = []
             }

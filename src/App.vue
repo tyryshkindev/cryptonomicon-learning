@@ -1,22 +1,19 @@
 <script>
 import { subscribeToTicker, unsubscribeFromTicker, wrongTickers } from './api'
 import {copy} from './cloner'
-import AddTicker from './components/AddTicker.vue'
+import InputTicker from './components/InputTicker.vue'
 export default {
   name: 'App',
 
   components: {
-    AddTicker
+    InputTicker
   },
 
   data() {
     return {
-      // ticker: '',
       filter: '',
       tickers: [],
       graph: [], 
-      // clues: [],
-      // shown: [],
       page: 1,
       exists: false,
       noloaded: true,
@@ -25,12 +22,6 @@ export default {
       wrongTickers: wrongTickers,
       maxGraphElements: 1,
       graphWidth: 38
-    }
-  },
-  props: {
-    exists: {
-      type: Boolean,
-      require: false
     }
   },
 
@@ -163,43 +154,12 @@ export default {
          t.price = price
       })
     },
-    // async getNames() {
-    //   const exchangeData = await loadList()
-    //   for (const key in exchangeData.Data) {
-    //     if (exchangeData.Data.hasOwnProperty(key)) {
-    //       this.clues.push(exchangeData.Data[key].Symbol)
-    //     }
-    //   }  
-    // },
-    // showClues() {
-    //   if (this.ticker) {
-    //     let input = this.ticker.toUpperCase()
-    //     this.shown = this.clues.filter(symbol => symbol.includes(input))
-    //   }      
-    // },
-    // resetClues() {
-    //   if (!(this.ticker)) {
-    //     this.shown = []
-    //   }
-    // },
-    // useClue(key) {
-    //   this.ticker = this.shown[key]
-    //   this.add()
-    //   this.showClues()
-    //   if (this.exists === false) {
-    //     this.shown = []
-    //   }
-    // },
     formatPrice(price) {
       if (price === '-') {
         return price
       }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
-
-    // resetExists() {
-    //   this.exists = false
-    // },
     add(ticker) {
         const currentTicker = { 
           name: ticker.toUpperCase(), 
@@ -250,7 +210,7 @@ export default {
   </div>
   <div class="container">
     <div class="w-full my-4"></div>
-    <add-ticker 
+    <InputTicker
     @add-ticker="add" 
     @exists-changed="handleExistsChanged"
     />
