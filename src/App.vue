@@ -21,7 +21,8 @@ export default {
       bc: new BroadcastChannel('cryptonomicon-update'),
       wrongTickers: wrongTickers,
       maxGraphElements: 1,
-      graphWidth: 38
+      graphWidth: 38,
+      datatext: ''
     }
   },
 
@@ -172,7 +173,6 @@ export default {
               this.emitChanges()
               this.shown = []
               this.filters = ''
-              // this.ticker = ''
               subscribeToTicker(currentTicker.name, newPrice => 
                 this.updateTicker(currentTicker.name, newPrice)
               )

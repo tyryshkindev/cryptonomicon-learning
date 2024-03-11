@@ -17,12 +17,12 @@
               placeholder="Например DOGE"
             />
           </div>
-          <display-clues ref="displayCluesRef" :ticker="ticker"/>
+          <DisplayClues ref="displayCluesRef" :datatext="datatext"/>
           <div v-if="exists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
 
         </div>
       </div>
-      <add-button
+      <AddButton
         @click="add"
         type="button"
         class="my-4"
@@ -38,17 +38,33 @@ export default {
         DisplayClues,
     },
 
-    data() {
-        return { 
-          ticker: '',
-          exists: false
-        }
-    },
-
     props: {
       exists: {
         type: Boolean,
         reqired: false
+      },
+      // datatext: {
+      //   type: String,
+      //   reqired: false
+      // }
+    },
+
+    data() {
+        return { 
+          ticker: '',
+          datatext: '',
+          exists: false
+        }
+    },
+
+    watch: {
+      ticker() {
+        this.datatext = this.ticker
+      },
+      datatext() {
+        if (this.datatext !== this.ticker) {
+          this.ticker = this.datatext
+        }
       }
     },
 

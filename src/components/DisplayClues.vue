@@ -22,7 +22,7 @@
 import { loadList } from '@/api'
 export default {
     props: {
-        ticker: {
+        datatext: {
             type: String,
             required: true
         }
@@ -38,13 +38,13 @@ export default {
     },
     methods: {
         showClues() {
-            if (this.ticker && this.clues !== []) {
-                let input = this.ticker.toUpperCase()
+            if (this.datatext && this.clues !== []) {
+                let input = this.datatext.toUpperCase()
                 this.shown = this.clues.filter(symbol => symbol.includes(input))
             }
         },
         resetClues() {
-            if (!this.ticker) {
+            if (!this.datatext) {
                 this.shown = []
             }
         },
