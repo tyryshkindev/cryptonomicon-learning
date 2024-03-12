@@ -68,8 +68,19 @@ export const unsubscribeFromTicker = ticker => {
     unsubscribeFromTickerOnWS(ticker)
 }
 
-export const loadList = () => 
+export const loadList = () => {
+    const clues = []
     fetch(
         'https://min-api.cryptocompare.com/data/all/coinlist?summary=true'
-    ).then(f => f.json())
+    )
+    .then(response => response.json())
+    .then(exchangeData => {
+        for (const key in exchangeData.Data) {
+            if (exchangeData.Data.hasOwnProperty(key)) {
+                clues.push(exchangeData.Data[key].Symbol)
+            }
+        }
+    })
+    return clues
+}
 

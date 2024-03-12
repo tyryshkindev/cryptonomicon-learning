@@ -1,16 +1,19 @@
 <script>
-import { subscribeToTicker, unsubscribeFromTicker, loadList, wrongTickers } from './api'
+import { subscribeToTicker, unsubscribeFromTicker, wrongTickers } from './api'
 import {copy} from './cloner'
+import InputTicker from './components/InputTicker.vue'
 export default {
   name: 'App',
+
+  components: {
+    InputTicker
+  },
+
   data() {
     return {
-      ticker: '',
       filter: '',
       tickers: [],
       graph: [], 
-      clues: [],
-      shown: [],
       page: 1,
       exists: false,
       noloaded: true,
@@ -18,7 +21,8 @@ export default {
       bc: new BroadcastChannel('cryptonomicon-update'),
       wrongTickers: wrongTickers,
       maxGraphElements: 1,
-      graphWidth: 38
+      graphWidth: 38,
+      datatext: ''
     }
   },
 
@@ -71,7 +75,7 @@ export default {
   },
 
   mounted() {
-    this.getNames()
+    // this.getNames()
     this.noloaded = false
     window.addEventListener('resize', this.calculateMaxGraphElements)
   },
@@ -123,6 +127,12 @@ export default {
   },
 
   methods: {
+    // emitChanges() {
+    //   this.$emit('exists-changed', this.exists)
+    // },
+    handleExistsChanged(newExistsValue) {
+      this.exists = newExistsValue;
+    },
     calculateMaxGraphElements() {
       if (!this.$refs.graph) {
         return
@@ -145,55 +155,23 @@ export default {
          t.price = price
       })
     },
-    async getNames() {
-      const exchangeData = await loadList()
-      for (const key in exchangeData.Data) {
-        if (exchangeData.Data.hasOwnProperty(key)) {
-          this.clues.push(exchangeData.Data[key].Symbol)
-        }
-      }  
-    },
-    showClues() {
-      if (this.ticker) {
-        let input = this.ticker.toUpperCase()
-        this.shown = this.clues.filter(symbol => symbol.includes(input))
-      }      
-    },
-    resetClues() {
-      if (!(this.ticker)) {
-        this.shown = []
-      }
-    },
-    useClue(key) {
-      this.ticker = this.shown[key]
-      this.add()
-      this.showClues()
-      if (this.exists === false) {
-        this.shown = []
-      }
-    },
     formatPrice(price) {
       if (price === '-') {
         return price
       }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
-
-    resetExists() {
-      this.exists = false
-    },
-    add() {
+    add(ticker) {
         const currentTicker = { 
-          name: this.ticker.toUpperCase(), 
+          name: ticker.toUpperCase(), 
           price: '-' 
         };
         if (!(this.tickers.some(t => t.name === currentTicker.name))) {
-            if (this.ticker) {
+            if (ticker) {
               this.tickers = [...this.tickers, currentTicker]
               this.exists = false
-              this.shown = []
+              // this.emitChanges()
               this.filters = ''
-              this.ticker = ''
               subscribeToTicker(currentTicker.name, newPrice => 
                 this.updateTicker(currentTicker.name, newPrice)
               )
@@ -203,6 +181,7 @@ export default {
             }
         } else {
           this.exists = true
+          // this.emitChanges()
         }
     },
     select(ticker) {
@@ -230,63 +209,11 @@ export default {
   </div>
   <div class="container">
     <div class="w-full my-4"></div>
-    <section>
-      <div class="flex">
-        <div class="max-w-xs">
-          <label for="wallet" class="block text-sm font-medium text-gray-700"
-            >Тикер</label
-          >
-          <div class="mt-1 relative rounded-md shadow-md">
-            <input
-              v-model="ticker"
-              @keydown.enter="add"
-              @input="resetExists(); showClues(); resetClues()"
-              type="text"
-              name="wallet"
-              id="wallet"
-              class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-              placeholder="Например DOGE"
-            />
-          </div>
-          <div v-if="this.shown.length" class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
-            <span v-if="this.shown[0]" @click="useClue(0)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              {{ this.shown[0] }}
-            </span>
-            <span v-if="this.shown[1]" @click="useClue(1)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              {{ this.shown[1] }}
-            </span>
-            <span v-if="this.shown[2]" @click="useClue(2)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              {{ this.shown[2] }}
-            </span>
-            <span v-if="this.shown[3]" @click="useClue(3)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              {{ this.shown[3] }}
-            </span>
-          </div>
-          <div v-if="exists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
-
-        </div>
-      </div>
-      <button
-        @click="add"
-        type="button"
-        class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-      >
-        <!-- Heroicon name: solid/mail -->
-        <svg
-          class="-ml-0.5 mr-2 h-6 w-6"
-          xmlns="http://www.w3.org/2000/svg"
-          width="30"
-          height="30"
-          viewBox="0 0 24 24"
-          fill="#ffffff"
-        >
-          <path
-            d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-          ></path>
-        </svg>
-        Добавить
-      </button>
-    </section>
+    <InputTicker
+    @add-method="add" 
+    @exists-changed="handleExistsChanged"
+    :exists="exists"
+    />
       <template v-if="tickers.length">
         <div>
           <hr class="w-full border-t border-gray-600 my-4" />
