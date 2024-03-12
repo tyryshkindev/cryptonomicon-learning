@@ -37,24 +37,18 @@ export default {
         this.clues = loadList()
     },
     methods: {
-        showClues() {
-            if (this.datatext && this.clues !== []) {
-                let input = this.datatext.toUpperCase()
-                this.shown = this.clues.filter(symbol => symbol.includes(input))
+        showClues(value) {
+            if (value && this.clues !== []) {
+                this.shown = this.clues.filter(symbol => symbol.includes(value.toUpperCase()))
             }
         },
-        resetClues() {
-            if (!this.datatext) {
+        resetClues(data) {
+            if (!data) {
                 this.shown = []
             }
         },
         clickClue(key) {
             this.$emit('add-method', this.shown[key])
-            this.resetClues()
-            this.showClues()
-            if (this.exists === false) {
-                this.shown = []
-            }
         },
     }
 }

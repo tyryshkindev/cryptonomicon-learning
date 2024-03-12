@@ -21,9 +21,9 @@
           ref="displayCluesRef"
           :datatext="datatext"
           @add-method="handleAdd"
+          @ticker-changed="changeTicker"
           />
           <div v-if="exists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
-
         </div>
       </div>
       <AddButton
@@ -45,7 +45,7 @@ export default {
     props: {
       exists: {
         type: Boolean,
-        reqired: false
+        required: true
       },
     },
 
@@ -53,7 +53,6 @@ export default {
         return { 
           ticker: '',
           datatext: '',
-          exists: false
         }
     },
 
@@ -69,25 +68,32 @@ export default {
     },
 
     methods: {
+        changeTicker(newValue) {
+          this.ticker = newValue
+        },
         directAdd() {
           this.handleAdd(this.ticker)
         },
-        handleAdd(ticker) {
-          this.$emit('add-method', ticker)
-          this.ticker = ''
-          this.$refs.displayCluesRef.resetClues()
+        async handleAdd(newTicker) {
+          await this.$emit('add-method', newTicker)
+          if (this.exists === false) {
+            this.ticker = ''
+            this.$refs.displayCluesRef.resetClues()
+          } else {
+            this.ticker = newTicker
+            this.$refs.displayCluesRef.showClues(newTicker)
+          }
         },
         handleInput() {
           this.resetExists()
-          this.$refs.displayCluesRef.showClues()
-          this.$refs.displayCluesRef.resetClues()
+          this.$refs.displayCluesRef.showClues(this.datatext)
+          this.$refs.displayCluesRef.resetClues(this.datatext)
         },
         resetExists() {
-          this.exists = false
-          this.existsChanged()
+          this.existsChanged(false)
         },
-        existsChanged() {
-          this.$emit('exists-changed', this.exists)
+        existsChanged(newValue) {
+          this.$emit('exists-changed', newValue)
         },
     }
 }

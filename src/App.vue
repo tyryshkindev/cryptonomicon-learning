@@ -127,9 +127,9 @@ export default {
   },
 
   methods: {
-    emitChanges() {
-      this.$emit('exists-changed', this.exists)
-    },
+    // emitChanges() {
+    //   this.$emit('exists-changed', this.exists)
+    // },
     handleExistsChanged(newExistsValue) {
       this.exists = newExistsValue;
     },
@@ -170,7 +170,7 @@ export default {
             if (ticker) {
               this.tickers = [...this.tickers, currentTicker]
               this.exists = false
-              this.emitChanges()
+              // this.emitChanges()
               this.filters = ''
               subscribeToTicker(currentTicker.name, newPrice => 
                 this.updateTicker(currentTicker.name, newPrice)
@@ -181,7 +181,7 @@ export default {
             }
         } else {
           this.exists = true
-          this.emitChanges()
+          // this.emitChanges()
         }
     },
     select(ticker) {
@@ -212,6 +212,7 @@ export default {
     <InputTicker
     @add-method="add" 
     @exists-changed="handleExistsChanged"
+    :exists="exists"
     />
       <template v-if="tickers.length">
         <div>
