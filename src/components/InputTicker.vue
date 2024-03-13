@@ -68,20 +68,29 @@ export default {
     },
 
     methods: {
+        changeExists(value) {
+          this.$emit('exists-changed', value)
+        },
         changeTicker(newValue) {
-          this.ticker = newValue
+          if (typeof newValue === 'string') {
+            this.ticker = newValue
+          } window.alert('Значение тикера не должно быть пустым')
         },
         directAdd() {
           this.handleAdd(this.ticker)
         },
         async handleAdd(newTicker) {
-          await this.$emit('add-method', newTicker)
-          if (this.exists === false) {
-            this.ticker = ''
-            this.$refs.displayCluesRef.resetClues()
+          if (typeof newTicker === 'string' && newTicker) {
+            await this.$emit('add-method', newTicker)
+            if (this.exists === false) {
+              this.ticker = ''
+              this.$refs.displayCluesRef.resetClues()
+            } else {
+              this.ticker = newTicker
+              this.$refs.displayCluesRef.showClues(newTicker)
+            }
           } else {
-            this.ticker = newTicker
-            this.$refs.displayCluesRef.showClues(newTicker)
+            window.alert('Значение тикера не должно быть пустым')
           }
         },
         handleInput() {
@@ -90,10 +99,7 @@ export default {
           this.$refs.displayCluesRef.resetClues(this.datatext)
         },
         resetExists() {
-          this.existsChanged(false)
-        },
-        existsChanged(newValue) {
-          this.$emit('exists-changed', newValue)
+          this.changeExists(false)
         },
     }
 }
