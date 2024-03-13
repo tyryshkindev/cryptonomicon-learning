@@ -46,7 +46,8 @@ export default {
     },
   },
 
-  created() {
+  mounted() {
+    this.isLoaded = true
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
     if (windowData.filter) {
       this.filter = windowData.filter
@@ -67,10 +68,6 @@ export default {
     this.bc.addEventListener('message', event => {
       this.tickers = event.data
     })
-  },
-
-  mounted() {
-    this.isLoaded = true
   },
 
   computed: {
