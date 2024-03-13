@@ -1,28 +1,30 @@
 <script>
-import { subscribeToTicker, unsubscribeFromTicker, wrongTickers } from './api'
-import {copy} from './cloner'
+import { subscribeToTicker, unsubscribeFromTicker, wrongTickers } from '@/api'
+import {copy} from './helpers'
 import InputTicker from './components/InputTicker.vue'
+import DisplayGraph from './components/DisplayGraph.vue'
 export default {
   name: 'App',
 
   components: {
-    InputTicker
+    InputTicker,
+    DisplayGraph
   },
 
   data() {
     return {
       filter: '',
       tickers: [],
-      graph: [], 
+      // graph: [], 
       page: 1,
       exists: false,
-      noloaded: true,
+      isLoaded: false,
       selectedTicker: null,
       bc: new BroadcastChannel('cryptonomicon-update'),
       wrongTickers: wrongTickers,
-      maxGraphElements: 1,
-      graphWidth: 38,
-      datatext: ''
+      // maxGraphElements: 1,
+      // graphWidth: 38,
+      exportedPrice: 0
     }
   },
 
@@ -30,10 +32,10 @@ export default {
     tickers() {
       localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
     },
-    selectedTicker() {
-      this.graph = []
-      this.$nextTick().then(this.calculateMaxGraphElements)
-    },
+    // selectedTicker() {
+    //   this.graph = []
+    //   this.$nextTick().then(this.calculateMaxGraphElements)
+    // },
     filter() {
       this.page = 1
     },
@@ -75,14 +77,13 @@ export default {
   },
 
   mounted() {
-    // this.getNames()
-    this.noloaded = false
-    window.addEventListener('resize', this.calculateMaxGraphElements)
+    this.isLoaded = true
+    // window.addEventListener('resize', this.calculateMaxGraphElements)
   },
 
-  beforeUnmount() {
-    window.removeEventListener('resize', this.calculateMaxGraphElements)
-  },
+  // beforeUnmount() {
+  //   window.removeEventListener('resize', this.calculateMaxGraphElements)
+  // },
 
   computed: {
     pageStateOptions() {
@@ -113,32 +114,32 @@ export default {
     hasNextPage() {
       return this.filteredTickers.length > this.endIndex
     },
-    normalizedGraph() {
-      const maxValue = Math.max(...this.graph)
-      const minValue = Math.min(...this.graph)
+    // normalizedGraph() {
+    //   const maxValue = Math.max(...this.graph)
+    //   const minValue = Math.min(...this.graph)
 
-      if (maxValue === minValue) {
-        return this.graph.map(() => 50)
-      }
-      return this.graph.map(
-        price => 5 + ((price - minValue) * 95) / (maxValue - minValue)
-      )
-    },
+    //   if (maxValue === minValue) {
+    //     return this.graph.map(() => 50)
+    //   }
+    //   return this.graph.map(
+    //     price => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+    //   )
+    // },
   },
 
   methods: {
-    // emitChanges() {
-    //   this.$emit('exists-changed', this.exists)
-    // },
+    closeGraph() {
+      this.selectedTicker = null
+    },
     handleExistsChanged(newExistsValue) {
       this.exists = newExistsValue;
     },
-    calculateMaxGraphElements() {
-      if (!this.$refs.graph) {
-        return
-      }
-      this.maxGraphElements =  this.$refs.graph.clientWidth / this.graphWidth
-      },
+    // calculateMaxGraphElements() {
+    //   if (!this.$refs.graph) {
+    //     return
+    //   }
+    //   this.maxGraphElements =  this.$refs.graph.clientWidth / this.graphWidth
+    // },
     checkWrong() {
       return this.paginatedTickers.some(t => wrongTickers.includes(t.name))
     },
@@ -147,10 +148,11 @@ export default {
         .filter(t => t.name === tickerName)
         .forEach(t => {
         if (t === this.selectedTicker) {
-          this.graph.push(price)
-          if (this.graph.length > this.maxGraphElements) {
-            this.graph = this.graph.slice(-(this.maxGraphElements))
-          }
+          this.exportedPrice = price
+          // this.graph.push(price)
+          // if (this.graph.length > this.maxGraphElements) {
+          //   this.graph = this.graph.slice(-(this.maxGraphElements))
+          // }
         }
          t.price = price
       })
@@ -162,27 +164,25 @@ export default {
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
     add(ticker) {
-        const currentTicker = { 
-          name: ticker.toUpperCase(), 
-          price: '-' 
-        };
+      if (typeof ticker === 'string' && ticker !== '') {
+        const currentTicker = {
+          name: ticker.toUpperCase(),
+          price: '-'
+        }
         if (!(this.tickers.some(t => t.name === currentTicker.name))) {
-            if (ticker) {
-              this.tickers = [...this.tickers, currentTicker]
-              this.exists = false
-              // this.emitChanges()
-              this.filters = ''
-              subscribeToTicker(currentTicker.name, newPrice => 
-                this.updateTicker(currentTicker.name, newPrice)
-              )
-              this.bc.postMessage(copy(this.tickers))
-            } else {
-              window.alert('Значение тикера не должно быть пустым')
-            }
+          this.tickers = [...this.tickers, currentTicker]
+          this.exists = false
+          this.filters = ''
+          subscribeToTicker(currentTicker.name, newPrice =>
+            this.updateTicker(currentTicker.name, newPrice)
+          )
+          this.bc.postMessage(copy(this.tickers))
         } else {
           this.exists = true
-          // this.emitChanges()
         }
+      } else {
+        window.alert('Значение тикера не должно быть пустым')
+      }
     },
     select(ticker) {
       this.selectedTicker = ticker
@@ -201,7 +201,7 @@ export default {
 
 <template>
 <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
-  <div v-if="noloaded" class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
+  <div v-if="isLoaded === false" class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
     <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -276,7 +276,12 @@ export default {
       </dl>
       <hr class="w-full border-t border-gray-600 my-4" />
     </template>
-      <section v-if="selectedTicker" class="relative">
+    <DisplayGraph 
+    :selectedTicker="selectedTicker"
+    :price="exportedPrice"
+    @close-graph="closeGraph"
+    />
+      <!-- <section v-if="selectedTicker" class="relative">
       <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
         {{ selectedTicker.name }} - USD
       </h3>
@@ -316,7 +321,7 @@ export default {
           </g>
         </svg>
       </button>
-    </section>
+    </section> -->
   </div>
 </div>
 </template>
