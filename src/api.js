@@ -1,4 +1,4 @@
-const API_KEY = '3ae297140a9f7c800ccd0bfac0719741592e8d9fb4f8b9b522f49f5aee143ad8'
+const API_KEY = '61846baf7ac7e4c1c9713b9d98ebe8c2eda4fa82e67ae9a36257fdd2374639ee'
 
 const tickersHandlers = new Map()
 export const wrongTickers = []
