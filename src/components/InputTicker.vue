@@ -27,7 +27,7 @@
         </div>
       </div>
       <AddButton
-        @click="handleAdd"
+        @click="directAdd"
         type="button"
         class="my-4"
       />
@@ -74,6 +74,7 @@ export default {
         changeTicker(newValue) {
           if (typeof newValue === 'string') {
             this.ticker = newValue
+            return
           } window.alert('Значение тикера не должно быть пустым')
         },
         directAdd() {
@@ -82,12 +83,11 @@ export default {
         async handleAdd(newTicker) {
           if (typeof newTicker === 'string' && newTicker) {
             await this.$emit('add-method', newTicker)
+            // this.$emit("update:newTicker", newTicker)
             if (this.exists === false) {
               this.ticker = ''
-              this.$refs.displayCluesRef.resetClues()
             } else {
               this.ticker = newTicker
-              this.$refs.displayCluesRef.showClues(newTicker)
             }
           } else {
             window.alert('Значение тикера не должно быть пустым')
@@ -95,8 +95,6 @@ export default {
         },
         handleInput() {
           this.resetExists()
-          this.$refs.displayCluesRef.showClues(this.datatext)
-          this.$refs.displayCluesRef.resetClues(this.datatext)
         },
         resetExists() {
           this.changeExists(false)
